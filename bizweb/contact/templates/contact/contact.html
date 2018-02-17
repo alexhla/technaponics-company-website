@@ -1,0 +1,125 @@
+{% extends "home/header.html" %}
+{% block content %}
+{% load staticfiles %}
+<br><br>
+    <!-- Start Contact Form -->
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                <div class="well well-sm centerText">
+                    <form class="form-horizontal" onsubmit="validateForm(); return false;>
+                        <fieldset>
+                            <legend class="text-center">Contact us</legend>
+                            <!-- Name input-->
+                            <div class="form-group">
+                              <label class="col-md-3 control-label" for="name"><i class="fa fa-users fa-2x"></i></label>
+                              <div class="col-md-9">
+                                <input id="nameUserInput" name="name" type="text" placeholder="Your name" class="form-control" maxlength="70">
+                              </div>
+                            </div>
+                            <!-- Email input-->
+                            <div class="form-group">
+                              <label class="col-md-3 control-label" for="email"><i class="fa fa-envelope fa-2x"></i></label>
+                              <div class="col-md-9">
+                                <input id="emailUserInput" name="email" type="text" placeholder="Your email" class="form-control" maxlength="256">
+                              </div>
+                            </div>
+                            <!-- Message body -->
+                            <div class="form-group">
+                              <label class="col-md-3 control-label" for="message"><i class="fa fa-comments fa-2x"></i></label>
+                              <div class="col-md-9">
+                                <textarea id="msgUserInput" name="message" placeholder="Please enter your message..." rows="7" class="form-control" maxlength="1000"></textarea>
+                              </div>
+                            </div>
+                            <span id="submitFeedback"></span>
+                            <!-- Join Mail List Checkbox-->
+                            <div class="form-group">
+                              <div class="checkbox col-md-12 text-right">
+                                <label><input id="joinCheckbox" type="checkbox">Join our email list</label>
+                              </div>
+                            </div>
+                            <!-- Form actions -->
+                            <div class="form-group">
+                              <div class="col-md-12 text-right">
+                                <button  id="submitBtn" type="button" class="btn btn-success btn-lg" onclick="validateForm()">Submit</button>
+                              </div>
+                            </div>
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- End Contact Form -->
+<br>
+{% block javascript %}
+<script language="JavaScript" type="text/javascript" src="{% static 'home/js/jquery-3.1.1.min.js' %}"></script>
+<script>
+// Generate CSRF Token
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+var csrftoken = getCookie('csrftoken');
+
+
+// Display message character maximum and current count
+document.getElementById('msgUserInput').onkeyup = function () {
+  document.getElementById('submitFeedback').innerHTML = "1000 Character Maximum<br>" + (1000 - this.value.length) + " Remaining";
+};
+
+// Validate form and POST to api, disable input fields upon sucess
+function validateForm() {
+    var regex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        email = document.getElementById("emailUserInput").value;
+    if(regex.test(email) == true){
+        document.getElementById("submitFeedback").innerHTML = 'Sending...';
+        name = document.getElementById("nameUserInput").value;
+        msg = document.getElementById("msgUserInput").value;  
+        $.ajax({
+            type: 'POST',
+            url: '/contact/api/formcontact/',
+            dataType: "json",            
+            contentType: 'application/json',
+            data: JSON.stringify({'name':name,'email':email,'msg':msg}),
+            success: function() {
+                document.getElementById("nameUserInput").disabled = true;
+                document.getElementById("emailUserInput").disabled = true;
+                document.getElementById("msgUserInput").disabled = true;
+                document.getElementById("joinCheckbox").disabled = true;
+                document.getElementById("submitBtn").disabled = true;
+                document.getElementById("submitFeedback").innerHTML = 'We Got It. Be In Touch Soon!';
+            },
+            beforeSend: function(xhr) {xhr.setRequestHeader("X-CSRFToken", csrftoken);}
+        });
+
+        // Join Email List
+        if (document.getElementById('joinCheckbox').checked) {
+            $.ajax({
+                type: 'POST',
+                url: '/contact/api/listemail/',
+                dataType: "json",
+                contentType: 'application/json',
+                data: JSON.stringify({'email':email}),
+                beforeSend: function(xhr) {xhr.setRequestHeader("X-CSRFToken", csrftoken);}
+            });
+        }
+    }
+    else{
+        document.getElementById("submitFeedback").innerHTML = 'Please Enter A Valid E-mail Address';
+    }
+}
+</script>
+{% endblock %}
+{% endblock %}
