@@ -1,0 +1,6 @@
+/admin/** linguist-vendored
+/rest_framework/** linguist-vendored
+
+bootstrap.min.css linguist-vendored=false
+font-awesome.min.css linguist-vendored=false
+jquery-3.1.1.min.js linguist-vendored=false
